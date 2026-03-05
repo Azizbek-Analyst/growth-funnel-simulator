@@ -287,7 +287,254 @@ document.getElementById('export-pdf-btn').addEventListener('click', () => {
     if (currentResults) exportPDF(feature, currentResults);
 });
 
+// ═══════════════════════════════════════════════════════════════
+//  A/B Test Calculators (purely in-memory, not persisted)
+// ═══════════════════════════════════════════════════════════════
+
+const Z_TABLE = { 0.005: 2.576, 0.01: 2.326, 0.025: 1.960, 0.05: 1.645, 0.10: 1.282, 0.20: 0.842 };
+
+function zFromAlpha(alpha, twoSided = true) {
+    const key = twoSided ? alpha / 2 : alpha;
+    if (Z_TABLE[key]) return Z_TABLE[key];
+    const sorted = Object.keys(Z_TABLE).map(Number).sort((a, b) => a - b);
+    for (let i = 0; i < sorted.length - 1; i++) {
+        if (key >= sorted[i] && key <= sorted[i + 1]) {
+            const ratio = (key - sorted[i]) / (sorted[i + 1] - sorted[i]);
+            return Z_TABLE[sorted[i]] * (1 - ratio) + Z_TABLE[sorted[i + 1]] * ratio;
+        }
+    }
+    return 1.96;
+}
+
+function zFromPower(power) {
+    const beta = 1 - power;
+    return zFromAlpha(beta, false);
+}
+
+// Approximate normal CDF using Abramowitz & Stegun
+function normalCDF(x) {
+    const a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741, a4 = -1.453152027, a5 = 1.061405429;
+    const p = 0.3275911;
+    const sign = x < 0 ? -1 : 1;
+    x = Math.abs(x) / Math.SQRT2;
+    const tt = 1.0 / (1.0 + p * x);
+    const y = 1.0 - (((((a5 * tt + a4) * tt) + a3) * tt + a2) * tt + a1) * tt * Math.exp(-x * x);
+    return 0.5 * (1.0 + sign * y);
+}
+
+// Approximate t-distribution CDF for large df via normal; for small df use series
+function tCDF(t, df) {
+    if (df >= 30) return normalCDF(t);
+    const x = df / (df + t * t);
+    const a = df / 2, b = 0.5;
+    const ibeta = incompleteBeta(x, a, b);
+    const cdf = 1 - 0.5 * ibeta;
+    return t >= 0 ? cdf : 1 - cdf;
+}
+
+function incompleteBeta(x, a, b) {
+    if (x <= 0) return 0;
+    if (x >= 1) return 1;
+    const maxIter = 200;
+    const eps = 1e-14;
+    const lnBeta = gammaLn(a) + gammaLn(b) - gammaLn(a + b);
+    const front = Math.exp(Math.log(x) * a + Math.log(1 - x) * b - lnBeta) / a;
+    let f = 1, c = 1, d = 0;
+    for (let i = 0; i <= maxIter; i++) {
+        let m = i >> 1;
+        let numerator;
+        if (i === 0) numerator = 1;
+        else if (i % 2 === 0) numerator = (m * (b - m) * x) / ((a + 2 * m - 1) * (a + 2 * m));
+        else numerator = -((a + m) * (a + b + m) * x) / ((a + 2 * m) * (a + 2 * m + 1));
+        d = 1 + numerator * d;
+        if (Math.abs(d) < eps) d = eps;
+        d = 1 / d;
+        c = 1 + numerator / c;
+        if (Math.abs(c) < eps) c = eps;
+        f *= d * c;
+        if (Math.abs(d * c - 1) < eps) break;
+    }
+    return front * (f - 1);
+}
+
+function gammaLn(z) {
+    const c = [76.18009172947146, -86.50532032941677, 24.01409824083091,
+        -1.231739572450155, 0.1208650973866179e-2, -0.5395239384953e-5];
+    let x = z, y = z;
+    let tmp = x + 5.5;
+    tmp -= (x + 0.5) * Math.log(tmp);
+    let ser = 1.000000000190015;
+    for (let j = 0; j < 6; j++) ser += c[j] / ++y;
+    return -tmp + Math.log(2.5066282746310005 * ser / x);
+}
+
+// ── Sample Size Calculator ──────────────────────────────────
+function calcSampleSize() {
+    const p1 = parseFloat(document.getElementById('ab-baseline-cr').value || 0) / 100;
+    const mde = parseFloat(document.getElementById('ab-mde').value || 0) / 100;
+    const alpha = parseFloat(document.getElementById('ab-alpha').value);
+    const power = parseFloat(document.getElementById('ab-power').value);
+    const dailyTraffic = parseFloat(document.getElementById('ab-daily-traffic').value || 0);
+
+    if (p1 <= 0 || mde <= 0) {
+        document.getElementById('ab-res-n').textContent = '—';
+        document.getElementById('ab-res-total').textContent = '—';
+        document.getElementById('ab-res-duration').textContent = '—';
+        return;
+    }
+
+    const p2 = p1 + mde;
+    const pPool = (p1 + p2) / 2;
+    const za = zFromAlpha(alpha);
+    const zb = zFromPower(power);
+    const n = Math.ceil(
+        Math.pow(za * Math.sqrt(2 * pPool * (1 - pPool)) + zb * Math.sqrt(p1 * (1 - p1) + p2 * (1 - p2)), 2)
+        / Math.pow(p1 - p2, 2)
+    );
+    const total = n * 2;
+
+    document.getElementById('ab-res-n').textContent = n.toLocaleString();
+    document.getElementById('ab-res-total').textContent = total.toLocaleString();
+
+    if (dailyTraffic > 0) {
+        const days = Math.ceil(total / dailyTraffic);
+        if (days <= 90) {
+            document.getElementById('ab-res-duration').textContent = `${days}d`;
+        } else {
+            document.getElementById('ab-res-duration').textContent = `${(days / 7).toFixed(1)}w`;
+        }
+    } else {
+        document.getElementById('ab-res-duration').textContent = '—';
+    }
+}
+
+// ── Conversion Test (Chi-Squared / Z-Test) ──────────────────
+function calcConversionTest() {
+    const n1 = parseInt(document.getElementById('ab-conv-n1').value);
+    const x1 = parseInt(document.getElementById('ab-conv-x1').value);
+    const n2 = parseInt(document.getElementById('ab-conv-n2').value);
+    const x2 = parseInt(document.getElementById('ab-conv-x2').value);
+    const alpha = parseFloat(document.getElementById('ab-conv-alpha').value);
+
+    const resultsEl = document.getElementById('ab-conv-results');
+
+    if (!n1 || !n2 || n1 < 1 || n2 < 1 || isNaN(x1) || isNaN(x2) || x1 > n1 || x2 > n2) {
+        resultsEl.style.display = 'none';
+        return;
+    }
+
+    const p1 = x1 / n1;
+    const p2 = x2 / n2;
+    const pPool = (x1 + x2) / (n1 + n2);
+    const se = Math.sqrt(pPool * (1 - pPool) * (1 / n1 + 1 / n2));
+    const z = se > 0 ? (p2 - p1) / se : 0;
+    const chi2 = z * z;
+    const pValue = 2 * (1 - normalCDF(Math.abs(z)));
+
+    const confPct = ((1 - alpha) * 100).toFixed(0);
+    const isSignificant = pValue < alpha;
+
+    document.getElementById('ab-conv-cr1').textContent = (p1 * 100).toFixed(2) + '%';
+    document.getElementById('ab-conv-cr2').textContent = (p2 * 100).toFixed(2) + '%';
+    document.getElementById('ab-conv-uplift').textContent = ((p2 - p1) * 100).toFixed(2) + 'pp';
+    document.getElementById('ab-conv-rel-uplift').textContent = p1 > 0 ? ((p2 - p1) / p1 * 100).toFixed(1) + '%' : '—';
+    document.getElementById('ab-conv-zscore').textContent = z.toFixed(4);
+    document.getElementById('ab-conv-chi2').textContent = chi2.toFixed(4);
+    document.getElementById('ab-conv-pvalue').textContent = pValue < 0.0001 ? '<0.0001' : pValue.toFixed(4);
+
+    const verdictEl = document.getElementById('ab-conv-verdict');
+    if (isSignificant) {
+        verdictEl.className = 'alert alert-info';
+        verdictEl.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg><span><strong>${t('feature.abSignificant')} ${confPct}%.</strong> ${p2 > p1 ? t('feature.abVariantWins') : t('feature.abControlWins')}.</span>`;
+    } else {
+        verdictEl.className = 'alert alert-warning';
+        verdictEl.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span>${t('feature.abNotSignificant')} ${confPct}%. p = ${pValue.toFixed(4)}</span>`;
+    }
+
+    resultsEl.style.display = 'block';
+}
+
+// ── Revenue Test (2-Sample Welch's T-Test) ──────────────────
+function calcRevenueTest() {
+    const n1 = parseInt(document.getElementById('ab-rev-n1').value);
+    const mean1 = parseFloat(document.getElementById('ab-rev-mean1').value);
+    const sd1 = parseFloat(document.getElementById('ab-rev-sd1').value);
+    const n2 = parseInt(document.getElementById('ab-rev-n2').value);
+    const mean2 = parseFloat(document.getElementById('ab-rev-mean2').value);
+    const sd2 = parseFloat(document.getElementById('ab-rev-sd2').value);
+    const alpha = parseFloat(document.getElementById('ab-rev-alpha').value);
+
+    const resultsEl = document.getElementById('ab-rev-results');
+
+    if (!n1 || !n2 || n1 < 2 || n2 < 2 || isNaN(mean1) || isNaN(mean2) || isNaN(sd1) || isNaN(sd2) || sd1 < 0 || sd2 < 0) {
+        resultsEl.style.display = 'none';
+        return;
+    }
+
+    const v1 = (sd1 * sd1) / n1;
+    const v2 = (sd2 * sd2) / n2;
+    const se = Math.sqrt(v1 + v2);
+    const tStat = se > 0 ? (mean2 - mean1) / se : 0;
+    const df = se > 0 ? Math.pow(v1 + v2, 2) / (Math.pow(v1, 2) / (n1 - 1) + Math.pow(v2, 2) / (n2 - 1)) : 1;
+    const pValue = 2 * (1 - tCDF(Math.abs(tStat), df));
+
+    const confPct = ((1 - alpha) * 100).toFixed(0);
+    const tCrit = zFromAlpha(alpha);
+    const ciLow = (mean2 - mean1) - tCrit * se;
+    const ciHigh = (mean2 - mean1) + tCrit * se;
+    const isSignificant = pValue < alpha;
+
+    document.getElementById('ab-rev-res-mean1').textContent = formatCurrency(mean1);
+    document.getElementById('ab-rev-res-mean2').textContent = formatCurrency(mean2);
+    document.getElementById('ab-rev-diff').textContent = formatCurrency(mean2 - mean1);
+    document.getElementById('ab-rev-ci').textContent = `[${formatCurrency(ciLow)}, ${formatCurrency(ciHigh)}]`;
+    document.getElementById('ab-rev-tstat').textContent = tStat.toFixed(4);
+    document.getElementById('ab-rev-df').textContent = df.toFixed(1);
+    document.getElementById('ab-rev-pvalue').textContent = pValue < 0.0001 ? '<0.0001' : pValue.toFixed(4);
+
+    const verdictEl = document.getElementById('ab-rev-verdict');
+    if (isSignificant) {
+        verdictEl.className = 'alert alert-info';
+        const winner = mean2 > mean1 ? t('feature.abVariantWins') : t('feature.abControlWins');
+        verdictEl.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg><span><strong>${t('feature.abSignificant')} ${confPct}%.</strong> ${winner}.</span>`;
+    } else {
+        verdictEl.className = 'alert alert-warning';
+        verdictEl.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span>${t('feature.abNoSignificantRev')}. p = ${pValue.toFixed(4)}</span>`;
+    }
+
+    resultsEl.style.display = 'block';
+}
+
+// ── Bind A/B inputs ─────────────────────────────────────────
+document.querySelectorAll('.ab-input').forEach(el => {
+    el.addEventListener('input', () => {
+        calcSampleSize();
+        calcConversionTest();
+        calcRevenueTest();
+    });
+    el.addEventListener('change', () => {
+        calcSampleSize();
+        calcConversionTest();
+        calcRevenueTest();
+    });
+});
+
+function prefillAbFromFeature() {
+    const crEl = document.getElementById('ab-baseline-cr');
+    if (crEl && feature.inputs.baselineCR) {
+        crEl.value = (feature.inputs.baselineCR * 100).toFixed(1);
+    }
+    const trafficEl = document.getElementById('ab-daily-traffic');
+    if (trafficEl && feature.inputs.usersExposed) {
+        trafficEl.value = Math.round(feature.inputs.usersExposed / 30);
+    }
+}
+
 // ── Init ────────────────────────────────────────────────────
 renderHeader();
 populateInputs();
+prefillAbFromFeature();
 recalculate();
+calcSampleSize();
+calcConversionTest();
+calcRevenueTest();

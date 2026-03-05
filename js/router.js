@@ -4,6 +4,7 @@
 
 import { isLoggedIn, getUser, logout, getCurrentProject, getProjects, setCurrentProjectId, setUser, ensureDefaultData } from './store.js';
 import { t, getLang, setLang, applyTranslations } from './i18n.js';
+import { getLikes, hasLiked, likeOnce } from './likes.js';
 
 /**
  * Check auth and redirect if needed
@@ -69,6 +70,14 @@ export function renderSidebar(activePage) {
       </a>
     </nav>
 
+    <div class="sidebar__like">
+      <button class="sidebar__like-btn ${hasLiked() ? 'liked' : ''}" id="sidebar-like-btn" ${hasLiked() ? 'disabled' : ''}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="${hasLiked() ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        <span>${hasLiked() ? t('sidebar.likeThanks') : t('sidebar.likeBtn')}</span>
+      </button>
+      <span class="sidebar__like-count" id="sidebar-like-count">${getLikes()} ${t('sidebar.likesCount')}</span>
+    </div>
+
     <div class="sidebar__footer">
       <div class="sidebar__user">
         <div class="sidebar__avatar">${user?.name?.[0]?.toUpperCase() || 'U'}</div>
@@ -94,6 +103,19 @@ export function renderSidebar(activePage) {
   document.getElementById('logout-btn')?.addEventListener('click', () => {
     logout();
     window.location.href = '/';
+  });
+
+  document.getElementById('sidebar-like-btn')?.addEventListener('click', () => {
+    const likes = likeOnce();
+    const btn = document.getElementById('sidebar-like-btn');
+    const countEl = document.getElementById('sidebar-like-count');
+    if (btn) {
+      btn.disabled = true;
+      btn.classList.add('liked');
+      btn.querySelector('svg').setAttribute('fill', 'currentColor');
+      btn.querySelector('span').textContent = t('sidebar.likeThanks');
+    }
+    if (countEl) countEl.textContent = `${likes} ${t('sidebar.likesCount')}`;
   });
 }
 
