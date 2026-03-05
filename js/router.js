@@ -78,6 +78,8 @@ export function renderSidebar(activePage) {
       <span class="sidebar__like-count" id="sidebar-like-count">${getLikes()} ${t('sidebar.likesCount')}</span>
     </div>
 
+    <div class="sidebar__counter" id="sidebar-visitor-counter"></div>
+
     <div class="sidebar__footer">
       <div class="sidebar__user">
         <div class="sidebar__avatar">${user?.name?.[0]?.toUpperCase() || 'U'}</div>
@@ -117,6 +119,18 @@ export function renderSidebar(activePage) {
     }
     if (countEl) countEl.textContent = `${likes} ${t('sidebar.likesCount')}`;
   });
+
+  // Visitor counter — load once per page
+  const counterBox = document.getElementById('sidebar-visitor-counter');
+  if (counterBox && !counterBox.dataset.loaded) {
+    counterBox.dataset.loaded = '1';
+    const s1 = document.createElement('script');
+    s1.src = 'https://www.freevisitorcounters.com/auth.php?id=3f605157960797a9d70dc8ee76aff102c8ff160d';
+    document.body.appendChild(s1);
+    const s2 = document.createElement('script');
+    s2.src = 'https://www.freevisitorcounters.com/en/home/counter/1513068/t/0';
+    counterBox.appendChild(s2);
+  }
 }
 
 /**
