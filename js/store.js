@@ -332,5 +332,74 @@ export function ensureDefaultData() {
         setCurrentOrgId(org.id);
         const project = createProject('My First Project');
         setCurrentProjectId(project.id);
+        // Seed demo features so Dashboard is not empty on first load
+        createFeature({
+            name: 'Improve onboarding conversion',
+            stage: 'analysis',
+            decision: 'explore',
+            inputs: {
+                country: 'Global',
+                segment: 'New signups',
+                usersExposed: 50000,
+                baselineCR: 0.08,
+                baselineAOV: 60,
+                avgLifetimeMonths: 12,
+                horizon: 12,
+                crUplift: 0.02,
+                crUpliftType: 'pp',
+                aovUpliftPct: 0.05,
+                retentionChangePct: 0,
+                probability: 0.7,
+                confidence: 7,
+                marginPct: 0.8,
+                discountRate: 0.1,
+                riskAdjustment: 1
+            },
+            costs: {
+                engineering: 8000,
+                design: 3000,
+                pm: 2000,
+                infra: 1000,
+                effortSize: 'M',
+                effortPoints: 8
+            },
+            notes: 'Example feature: optimize onboarding funnel to reduce drop-off on step 2.'
+        });
+
+        createFeature({
+            name: 'Launch premium subscription tier',
+            stage: 'approved',
+            decision: 'go',
+            inputs: {
+                country: 'Global',
+                segment: 'Active users',
+                usersExposed: 20000,
+                baselineCR: 0.03,
+                baselineAOV: 40,
+                avgLifetimeMonths: 18,
+                horizon: 24,
+                crUplift: 0.01,
+                crUpliftType: 'pp',
+                aovUpliftPct: 0.25,
+                retentionChangePct: 0.05,
+                probability: 0.6,
+                confidence: 6,
+                marginPct: 0.7,
+                discountRate: 0.12,
+                cannibalizationPct: 0.1,
+                riskAdjustment: 0.9
+            },
+            costs: {
+                engineering: 20000,
+                design: 7000,
+                pm: 6000,
+                marketing: 15000,
+                support: 3000,
+                infra: 4000,
+                effortSize: 'L',
+                effortPoints: 21
+            },
+            notes: 'Example feature: new premium plan with higher ARPU and slightly better retention.'
+        });
     }
 }
