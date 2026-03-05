@@ -10,3 +10,6 @@ pnpm-debug.log*
 *.env
 *.env.*
 
+# Local AI agent metadata (do not commit)
+.agent
+
