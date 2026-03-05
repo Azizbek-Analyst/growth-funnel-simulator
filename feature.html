@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feature Card — ROI Calculator</title>
+    <link rel="stylesheet" href="/css/base.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <link rel="stylesheet" href="/css/pages.css">
+</head>
+
+<body>
+    <div class="layout">
+        <button class="mobile-toggle" id="mobile-toggle">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+        </button>
+        <aside class="sidebar" id="sidebar"></aside>
+        <main class="main-content">
+            <!-- Feature Header -->
+            <div class="feature-header" id="feature-header"></div>
+
+            <!-- Tabs -->
+            <div class="tabs" id="feature-tabs">
+                <button class="tab active" data-tab="panel-inputs" data-i18n="feature.tabInputs">Inputs</button>
+                <button class="tab" data-tab="panel-results" data-i18n="feature.tabResults">Results</button>
+                <button class="tab" data-tab="panel-scenarios" data-i18n="feature.tabScenarios">Scenarios</button>
+                <button class="tab" data-tab="panel-notes" data-i18n="feature.tabNotes">Notes & Evidence</button>
+                <button class="tab" data-tab="panel-history" data-i18n="feature.tabHistory">History</button>
+            </div>
+
+            <!-- Warnings -->
+            <div id="warnings-container" class="mt-4"></div>
+
+            <!-- Tab Panels -->
+            <!-- INPUTS -->
+            <div class="tab-panel active" id="panel-inputs">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 data-i18n="feature.inputsTitle">Feature Inputs</h2>
+                    <label class="toggle" id="mode-toggle">
+                        <input type="checkbox" id="advanced-mode">
+                        <span class="toggle__track"><span class="toggle__thumb"></span></span>
+                        <span data-i18n="feature.advancedMode">Advanced Mode</span>
+                    </label>
+                </div>
+
+                <div class="feature-split">
+                    <div class="feature-inputs-panel">
+                        <!-- Baseline Metrics -->
+                        <div class="card">
+                            <h3 class="section-title" data-i18n="feature.baselineTitle">Baseline Metrics</h3>
+                            <div class="flex flex-col gap-4">
+                                <div class="form-group">
+                                    <label class="form-label" for="inp-users" data-i18n="feature.usersExposed">Users Exposed (MAU/Traffic)</label>
+                                    <div class="input-with-unit">
+                                        <input type="number" id="inp-users" class="form-input" min="0" step="100">
+                                        <span class="input-with-unit__suffix">users</span>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label" for="inp-cr" data-i18n="feature.baselineCR">Baseline Conversion Rate</label>
+                                        <div class="input-with-unit">
+                                            <input type="number" id="inp-cr" class="form-input" min="0" max="100"
+                                                step="0.1">
+                                            <span class="input-with-unit__suffix">%</span>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="inp-aov" data-i18n="feature.baselineAOV">Baseline AOV</label>
+                                        <div class="input-with-unit">
+                                            <input type="number" id="inp-aov" class="form-input" min="0" step="1">
+                                            <span class="input-with-unit__suffix">$</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="inp-horizon" data-i18n="feature.timeHorizon">Time Horizon</label>
+                                    <select id="inp-horizon" class="form-select">
+                                        <option value="1">1 month</option>
+                                        <option value="3">3 months</option>
+                                        <option value="6">6 months</option>
+                                        <option value="12" selected>12 months</option>
+                                        <option value="24">24 months</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Expected Effect -->
+                        <div class="card">
+                            <h3 class="section-title" data-i18n="feature.effectTitle">Expected Effect</h3>
+                            <div class="flex flex-col gap-4">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label" for="inp-cr-uplift" data-i18n="feature.crUplift">CR Uplift</label>
+                                        <div class="input-with-unit">
+                                            <input type="number" id="inp-cr-uplift" class="form-input" step="0.1">
+                                            <span class="input-with-unit__suffix">pp</span>
+                                        </div>
+                                        <span class="form-hint" data-i18n="feature.crHint">percentage points (e.g. 2 = +2pp)</span>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="inp-aov-change" data-i18n="feature.aovChange">AOV Change</label>
+                                        <div class="input-with-unit">
+                                            <input type="number" id="inp-aov-change" class="form-input" step="0.1">
+                                            <span class="input-with-unit__suffix">%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label" for="inp-probability" data-i18n="feature.probability">Probability of Success</label>
+                                        <div class="input-with-unit">
+                                            <input type="number" id="inp-probability" class="form-input" min="0"
+                                                max="100" step="1">
+                                            <span class="input-with-unit__suffix">%</span>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="inp-confidence" data-i18n="feature.confidence">Confidence Level</label>
+                                        <div class="flex items-center gap-3">
+                                            <input type="range" id="inp-confidence" class="range-input" min="1" max="10"
+                                                step="1">
+                                            <span class="font-mono font-semibold" id="confidence-value">5</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Advanced (hidden by default) -->
+                        <div class="card hidden" id="advanced-inputs">
+                            <h3 class="section-title" data-i18n="feature.advancedTitle">Advanced Parameters</h3>
+                            <div class="flex flex-col gap-4">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label" for="inp-arpu" data-i18n="feature.arpu">Baseline ARPU</label>
+                                        <div class="input-with-unit">
+                                            <input type="number" id="inp-arpu" class="form-input" min="0" step="1">
+                                            <span class="input-with-unit__suffix">$</span>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="inp-retention" data-i18n="feature.retentionChange">Retention Change</label>
+                                        <div class="input-with-unit">
+                                            <input type="number" id="inp-retention" class="form-input" step="0.1">
+                                            <span class="input-with-unit__suffix">%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label" for="inp-lifetime" data-i18n="feature.avgLifetime">Avg Lifetime</label>
+                                        <div class="input-with-unit">
+                                            <input type="number" id="inp-lifetime" class="form-input" min="1" step="1">
+                                            <span class="input-with-unit__suffix">months</span>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="inp-margin" data-i18n="feature.margin">Margin</label>
+                                        <div class="input-with-unit">
+                                            <input type="number" id="inp-margin" class="form-input" min="0" max="100"
+                                                step="1">
+                                            <span class="input-with-unit__suffix">%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label" for="inp-discount" data-i18n="feature.discountRate">Discount Rate (Annual)</label>
+                                        <div class="input-with-unit">
+                                            <input type="number" id="inp-discount" class="form-input" min="0" max="100"
+                                                step="0.5">
+                                            <span class="input-with-unit__suffix">%</span>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="inp-cannibal" data-i18n="feature.cannibalization">Cannibalization</label>
+                                        <div class="input-with-unit">
+                                            <input type="number" id="inp-cannibal" class="form-input" min="0" max="100"
+                                                step="1">
+                                            <span class="input-with-unit__suffix">%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="inp-evidence" data-i18n="feature.evidenceLink">Evidence Link</label>
+                                    <input type="url" id="inp-evidence" class="form-input"
+                                        placeholder="https://docs.google.com/...">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cost Breakdown -->
+                        <div class="card">
+                            <h3 class="section-title" data-i18n="feature.oneTimeCosts">One-Time Costs</h3>
+                            <div class="flex flex-col gap-4">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label" for="cost-eng" data-i18n="feature.engineering">Engineering</label>
+                                        <div class="input-with-unit"><input type="number" id="cost-eng"
+                                                class="form-input" min="0" step="100"><span
+                                                class="input-with-unit__suffix">$</span></div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="cost-design" data-i18n="feature.design">Design</label>
+                                        <div class="input-with-unit"><input type="number" id="cost-design"
+                                                class="form-input" min="0" step="100"><span
+                                                class="input-with-unit__suffix">$</span></div>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label" for="cost-pm" data-i18n="feature.pm">PM</label>
+                                        <div class="input-with-unit"><input type="number" id="cost-pm"
+                                                class="form-input" min="0" step="100"><span
+                                                class="input-with-unit__suffix">$</span></div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="cost-legal" data-i18n="feature.legal">Legal / Compliance</label>
+                                        <div class="input-with-unit"><input type="number" id="cost-legal"
+                                                class="form-input" min="0" step="100"><span
+                                                class="input-with-unit__suffix">$</span></div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="cost-vendor" data-i18n="feature.vendor">Vendor</label>
+                                    <div class="input-with-unit"><input type="number" id="cost-vendor"
+                                            class="form-input" min="0" step="100"><span
+                                            class="input-with-unit__suffix">$</span></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h3 class="section-title" data-i18n="feature.recurringCosts">Recurring Monthly Costs</h3>
+                            <div class="flex flex-col gap-4">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label" for="cost-infra" data-i18n="feature.infra">Infrastructure</label>
+                                        <div class="input-with-unit"><input type="number" id="cost-infra"
+                                                class="form-input" min="0" step="50"><span
+                                                class="input-with-unit__suffix">$/mo</span></div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="cost-support" data-i18n="feature.support">Support</label>
+                                        <div class="input-with-unit"><input type="number" id="cost-support"
+                                                class="form-input" min="0" step="50"><span
+                                                class="input-with-unit__suffix">$/mo</span></div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="cost-licensing" data-i18n="feature.licensing">Licensing</label>
+                                    <div class="input-with-unit"><input type="number" id="cost-licensing"
+                                            class="form-input" min="0" step="50"><span
+                                            class="input-with-unit__suffix">$/mo</span></div>
+                                </div>
+                            </div>
+                            <hr style="border:none;border-top:1px solid var(--color-border);margin:24px 0 16px;">
+                            <h3 class="section-title" data-i18n="feature.effortTitle">Effort Estimate</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="cost-effort-size" data-i18n="feature.tshirtSize">T-Shirt Size</label>
+                                    <select id="cost-effort-size" class="form-select">
+                                        <option value="XS">XS</option>
+                                        <option value="S">S</option>
+                                        <option value="M">M</option>
+                                        <option value="L">L</option>
+                                        <option value="XL">XL</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="cost-effort-pts" data-i18n="feature.storyPoints">Story Points</label>
+                                    <input type="number" id="cost-effort-pts" class="form-input" min="0" step="1">
+                                </div>
+                            </div>
+                            <div class="form-group mt-4">
+                                <label class="form-label" for="cost-opportunity" data-i18n="feature.opportunityCost">Opportunity Cost</label>
+                                <input type="text" id="cost-opportunity" class="form-input"
+                                    placeholder="e.g. Blocks 2 weeks of team Alpha" data-i18n-placeholder="feature.opportunityPlaceholder">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Live Results Preview -->
+                    <div class="feature-results-panel">
+                        <div class="results-kpis stagger" id="live-kpis"></div>
+                        <div class="chart-container" id="live-chart-container">
+                            <div class="chart-container__title" data-i18n="feature.cumulativeChart">Cumulative Gain vs Cost</div>
+                            <div style="height:280px;"><canvas id="chart-cumulative"></canvas></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RESULTS -->
+            <div class="tab-panel" id="panel-results">
+                <h2 class="mb-6" data-i18n="feature.resultsTitle">Calculation Results</h2>
+                <div class="results-kpis stagger mb-8" id="full-kpis"></div>
+                <div class="grid grid-2 gap-6">
+                    <div class="chart-container">
+                        <div class="chart-container__title" data-i18n="feature.cashFlow">Cumulative Cash Flow</div>
+                        <div style="height:300px;"><canvas id="chart-results-cumulative"></canvas></div>
+                    </div>
+                    <div class="card">
+                        <h3 class="section-title" data-i18n="feature.sensitivityTitle">Sensitivity Drivers</h3>
+                        <div id="sensitivity-table"></div>
+                    </div>
+                </div>
+                <div class="card mt-6">
+                    <h3 class="section-title" data-i18n="feature.breakdownTitle">Detailed Breakdown</h3>
+                    <div id="results-breakdown"></div>
+                </div>
+            </div>
+
+            <!-- SCENARIOS -->
+            <div class="tab-panel" id="panel-scenarios">
+                <h2 class="mb-6" data-i18n="feature.scenariosTitle">Scenario Analysis</h2>
+                <div class="scenario-cards mb-8" id="scenario-cards"></div>
+                <div class="chart-container">
+                    <div class="chart-container__title" data-i18n="feature.scenarioChart">Scenario Comparison</div>
+                    <div style="height:320px;"><canvas id="chart-scenarios"></canvas></div>
+                </div>
+            </div>
+
+
+
+            <!-- NOTES -->
+            <div class="tab-panel" id="panel-notes">
+                <h2 class="mb-6" data-i18n="feature.notesTitle">Notes & Evidence</h2>
+                <div class="card">
+                    <div class="form-group">
+                        <label class="form-label" for="notes-text" data-i18n="feature.notesLabel">Notes</label>
+                        <textarea id="notes-text" class="form-input" rows="8"
+                            placeholder="Add context, evidence, and rationale for this feature..." data-i18n-placeholder="feature.notesPlaceholder"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HISTORY -->
+            <div class="tab-panel" id="panel-history">
+                <h2 class="mb-6" data-i18n="feature.historyTitle">Change History</h2>
+                <div id="history-list" class="card"></div>
+            </div>
+
+            <!-- Bottom Actions -->
+            <div class="flex justify-between items-center mt-8"
+                style="padding-top:var(--space-6);border-top:1px solid var(--color-border);">
+                <a href="/dashboard.html" class="btn btn-ghost">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 12H5" />
+                        <path d="m12 19-7-7 7-7" />
+                    </svg>
+                    <span data-i18n="feature.backToDash">Back to Dashboard</span>
+                </a>
+                <div class="flex gap-3">
+                    <button class="btn btn-secondary" id="export-pdf-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                        </svg>
+                        <span data-i18n="feature.exportPdf">Export PDF</span>
+                    </button>
+                    <button class="btn btn-primary" id="save-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                            <polyline points="17 21 17 13 7 13 7 21" />
+                            <polyline points="7 3 7 8 15 8" />
+                        </svg>
+                        <span data-i18n="feature.saveChanges">Save Changes</span>
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script type="module" src="/js/feature.js"></script>
+</body>
+
+</html>

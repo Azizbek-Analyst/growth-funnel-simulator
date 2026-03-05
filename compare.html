@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compare Features — ROI Calculator</title>
+    <link rel="stylesheet" href="/css/base.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <link rel="stylesheet" href="/css/pages.css">
+</head>
+
+<body>
+    <div class="layout">
+        <button class="mobile-toggle" id="mobile-toggle">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+        </button>
+        <aside class="sidebar" id="sidebar"></aside>
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-header__title" data-i18n="compare.title">Compare Features</h1>
+                    <p class="page-header__subtitle" data-i18n="compare.subtitle">Side-by-side analysis of your feature portfolio</p>
+                </div>
+                <div class="page-header__actions">
+                    <select class="form-select" id="sort-metric" style="width:auto;">
+                        <option value="roi" data-i18n="compare.sortRoi">Sort by ROI</option>
+                        <option value="ev" data-i18n="compare.sortEv">Sort by EV</option>
+                        <option value="payback" data-i18n="compare.sortPayback">Sort by Payback</option>
+                        <option value="revenue" data-i18n="compare.sortRevenue">Sort by Revenue</option>
+                        <option value="score" data-i18n="compare.sortScore">Sort by Score</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- What-if Controls -->
+            <div class="card mb-6">
+                <h3 class="section-title" data-i18n="compare.whatIf">What-If Adjustments</h3>
+                <div class="compare-controls">
+                    <div class="compare-slider-group">
+                        <label data-i18n="compare.confidenceMult">Confidence Multiplier</label>
+                        <div class="flex items-center gap-3">
+                            <input type="range" class="range-input" id="whatif-confidence" min="0.1" max="2" step="0.1"
+                                value="1">
+                            <span class="slider-value" id="whatif-confidence-val">1.0x</span>
+                        </div>
+                    </div>
+                    <div class="compare-slider-group">
+                        <label data-i18n="compare.discountRate">Discount Rate</label>
+                        <div class="flex items-center gap-3">
+                            <input type="range" class="range-input" id="whatif-discount" min="0" max="30" step="1"
+                                value="0">
+                            <span class="slider-value" id="whatif-discount-val">0%</span>
+                        </div>
+                    </div>
+                    <div class="compare-slider-group">
+                        <label data-i18n="compare.horizon">Horizon (months)</label>
+                        <div class="flex items-center gap-3">
+                            <input type="range" class="range-input" id="whatif-horizon" min="1" max="36" step="1"
+                                value="12">
+                            <span class="slider-value" id="whatif-horizon-val">12</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Comparison Table -->
+            <div id="compare-table-container" class="mb-6"></div>
+
+            <!-- Chart -->
+            <div class="chart-container">
+                <div class="chart-container__title" data-i18n="compare.chartTitle">Feature Comparison</div>
+                <div style="height:400px;"><canvas id="chart-compare"></canvas></div>
+            </div>
+        </main>
+    </div>
+    <script type="module" src="/js/compare.js"></script>
+</body>
+
+</html>

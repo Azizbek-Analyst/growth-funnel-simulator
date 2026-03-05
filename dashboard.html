@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard — Feature ROI Calculator</title>
+    <link rel="stylesheet" href="/css/base.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <link rel="stylesheet" href="/css/pages.css">
+</head>
+
+<body>
+    <div class="layout">
+        <button class="mobile-toggle" id="mobile-toggle">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+        </button>
+        <aside class="sidebar" id="sidebar"></aside>
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-header__title" data-i18n="dash.title">Dashboard</h1>
+                    <p class="page-header__subtitle" id="project-name">Loading...</p>
+                </div>
+                <div class="page-header__actions">
+                    <button class="btn btn-secondary" id="export-csv-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="7 10 12 15 17 10" />
+                            <line x1="12" y1="15" x2="12" y2="3" />
+                        </svg>
+                        <span data-i18n="dash.export">Export</span>
+                    </button>
+                    <button class="btn btn-primary" id="create-feature-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                        <span data-i18n="dash.newFeature">New Feature</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="dashboard-stats stagger" id="stats-grid"></div>
+
+            <!-- Toolbar -->
+            <div class="dashboard-toolbar">
+                <div class="dashboard-filters">
+                    <input type="text" class="filter-input" id="search-input" placeholder="Search features..." data-i18n-placeholder="dash.searchPlaceholder">
+                    <select class="filter-input" id="stage-filter">
+                        <option value="" data-i18n="dash.allStages">All Stages</option>
+                        <option value="draft" data-i18n="dash.draft">Draft</option>
+                        <option value="analysis" data-i18n="dash.analysis">Analysis</option>
+                        <option value="approved" data-i18n="dash.approved">Approved</option>
+                        <option value="in-progress" data-i18n="dash.inProgress">In Progress</option>
+                        <option value="launched" data-i18n="dash.launched">Launched</option>
+                    </select>
+                </div>
+                <div class="flex gap-3 items-center">
+                    <span class="text-sm text-muted" id="feature-count"></span>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div id="features-table-container"></div>
+
+            <!-- Create Feature Modal -->
+            <div class="modal-overlay hidden" id="create-modal">
+                <div class="modal">
+                    <div class="modal__header">
+                        <h2 class="modal__title" data-i18n="dash.createFeatureModal">Create Feature</h2>
+                        <button class="modal__close" id="close-modal">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18" />
+                                <line x1="6" y1="6" x2="18" y2="18" />
+                            </svg>
+                        </button>
+                    </div>
+                    <form id="create-feature-form" class="flex flex-col gap-4">
+                        <div class="form-group">
+                            <label class="form-label" for="feature-name" data-i18n="dash.featureName">Feature Name</label>
+                            <input type="text" id="feature-name" class="form-input"
+                                placeholder="e.g. Premium Subscription Tier" data-i18n-placeholder="dash.featureNamePlaceholder" required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label" for="feature-stage" data-i18n="dash.stage">Stage</label>
+                                <select id="feature-stage" class="form-select">
+                                    <option value="draft">Draft</option>
+                                    <option value="analysis">Analysis</option>
+                                    <option value="approved">Approved</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="feature-effort" data-i18n="dash.effort">Effort</label>
+                                <select id="feature-effort" class="form-select">
+                                    <option value="XS">XS (1-2 days)</option>
+                                    <option value="S">S (3-5 days)</option>
+                                    <option value="M" selected>M (1-2 weeks)</option>
+                                    <option value="L">L (3-4 weeks)</option>
+                                    <option value="XL">XL (5+ weeks)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-full" data-i18n="dash.createFeature">Create Feature</button>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script type="module" src="/js/dashboard.js"></script>
+</body>
+
+</html>

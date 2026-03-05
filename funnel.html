@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Funnel Impact Calculator</title>
+    <link rel="stylesheet" href="/css/base.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <link rel="stylesheet" href="/css/pages.css">
+    <style>
+        /* ── Layout ──────────────────────────────── */
+        .funnel-page {
+            max-width: 960px;
+        }
+
+        .block {
+            background: var(--color-bg);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            padding: 28px 32px;
+            margin-bottom: 24px;
+        }
+
+        .block__num {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--color-primary);
+            color: white;
+            font-size: 13px;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            margin-right: 10px;
+            vertical-align: -2px;
+        }
+
+        .block__title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--color-text);
+            display: flex;
+            align-items: center;
+        }
+
+        /* ── Funnel Table ─────────────────────────── */
+        .funnel-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .funnel-table th {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--color-text-muted);
+            padding: 8px 12px;
+            text-align: left;
+            border-bottom: 2px solid var(--color-border);
+        }
+
+        .funnel-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--color-border);
+            vertical-align: middle;
+        }
+
+        .funnel-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .funnel-table .step-num {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--color-primary-50);
+            color: var(--color-primary);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            font-size: 13px;
+        }
+
+        .funnel-table input[type="text"],
+        .funnel-table input[type="number"] {
+            border: none;
+            background: transparent;
+            font-weight: 600;
+            font-size: 14px;
+            padding: 4px 0;
+            width: 100%;
+            border-bottom: 2px solid transparent;
+            transition: border-color .2s;
+        }
+
+        .funnel-table input:focus {
+            outline: none;
+            border-bottom-color: var(--color-primary);
+        }
+
+        .funnel-table input[type="number"] {
+            font-family: var(--font-mono);
+            text-align: right;
+            width: 120px;
+        }
+
+        .funnel-table .conv-cell {
+            font-family: var(--font-mono);
+            font-weight: 600;
+            font-size: 15px;
+            text-align: center;
+        }
+
+        .funnel-table .conv-cell.bottleneck {
+            color: var(--color-danger);
+        }
+
+        .funnel-table .arrow-cell {
+            text-align: center;
+            color: var(--color-text-muted);
+        }
+
+        .funnel-table .remove-btn {
+            opacity: 0;
+            transition: opacity .15s;
+            cursor: pointer;
+            background: none;
+            border: none;
+            color: var(--color-danger);
+            font-size: 16px;
+            padding: 4px;
+        }
+
+        .funnel-table tr:hover .remove-btn {
+            opacity: 1;
+        }
+
+        /* ── Summary chips ────────────────────────── */
+        .summary-chips {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .chip {
+            padding: 14px 20px;
+            border-radius: var(--radius-md);
+            background: var(--color-bg-alt);
+            border: 1px solid var(--color-border);
+            min-width: 180px;
+        }
+
+        .chip__label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            color: var(--color-text-muted);
+            margin-bottom: 4px;
+        }
+
+        .chip__value {
+            font-size: 22px;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            color: var(--color-text);
+        }
+
+        .chip__sub {
+            font-size: 12px;
+            color: var(--color-text-muted);
+            margin-top: 2px;
+        }
+
+        .chip--primary {
+            border-color: var(--color-primary-200);
+            background: var(--color-primary-50);
+        }
+
+        .chip--danger {
+            border-color: hsl(0 70% 88%);
+            background: hsl(0 70% 97%);
+        }
+
+        .chip--accent {
+            border-color: var(--color-accent);
+            background: var(--color-accent-50);
+        }
+
+        /* ── Target goal ──────────────────────────── */
+        .target-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .target-row .big-input {
+            width: 100px;
+            font-size: 22px;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            text-align: center;
+        }
+
+        .target-arrow {
+            font-size: 20px;
+            color: var(--color-text-muted);
+        }
+
+        .target-result {
+            display: flex;
+            gap: 16px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+
+        /* ── Strategy ─────────────────────────────── */
+        .strategy-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .strategy-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--color-border);
+            cursor: pointer;
+            transition: all .2s;
+        }
+
+        .strategy-option:hover {
+            border-color: var(--color-primary-200);
+        }
+
+        .strategy-option.active {
+            border-color: var(--color-primary);
+            background: var(--color-primary-50);
+        }
+
+        .strategy-option input[type="radio"] {
+            accent-color: var(--color-primary);
+            width: 18px;
+            height: 18px;
+        }
+
+        .strategy-option__text {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .strategy-option__desc {
+            font-size: 12px;
+            color: var(--color-text-muted);
+        }
+
+        .strategy-result-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 16px;
+        }
+
+        .strategy-result-table th {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--color-text-muted);
+            padding: 8px 12px;
+            text-align: left;
+            border-bottom: 2px solid var(--color-border);
+        }
+
+        .strategy-result-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--color-border);
+            font-size: 14px;
+        }
+
+        .strategy-result-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .strategy-result-table .mono {
+            font-family: var(--font-mono);
+            font-weight: 600;
+        }
+
+        .strategy-result-table .positive {
+            color: var(--color-success);
+        }
+
+        .step-checkboxes {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin: 16px 0;
+        }
+
+        .step-checkboxes label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .step-checkboxes input {
+            accent-color: var(--color-primary);
+            width: 16px;
+            height: 16px;
+        }
+
+        /* ── Impact Simulator ─────────────────────── */
+        .sim-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .sim-results {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .sim-result-card {
+            padding: 16px;
+            border-radius: var(--radius-md);
+            background: var(--color-bg-alt);
+            border: 1px solid var(--color-border);
+            text-align: center;
+        }
+
+        .sim-result-card__label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            color: var(--color-text-muted);
+            margin-bottom: 4px;
+        }
+
+        .sim-result-card__value {
+            font-size: 20px;
+            font-weight: 700;
+            font-family: var(--font-mono);
+        }
+
+        .sim-result-card__sub {
+            font-size: 12px;
+            color: var(--color-text-muted);
+            margin-top: 4px;
+        }
+
+        .sim-result-card--green {
+            border-color: hsl(145 60% 75%);
+            background: hsl(145 60% 96%);
+        }
+
+        .sim-result-card--green .sim-result-card__value {
+            color: var(--color-success);
+        }
+
+        /* ── Funnel Visual ────────────────────────── */
+        .funnel-visual-compare {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+            margin-top: 20px;
+        }
+
+        .funnel-viz {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+        }
+
+        .funnel-viz__title {
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--color-text-muted);
+            margin-bottom: 12px;
+        }
+
+        .funnel-bar {
+            width: 100%;
+            text-align: center;
+            padding: 10px 8px;
+            color: white;
+            font-family: var(--font-mono);
+            font-weight: 600;
+            font-size: 13px;
+            transition: all .4s ease;
+            position: relative;
+        }
+
+        .funnel-bar span {
+            position: relative;
+            z-index: 1;
+        }
+
+        .funnel-arrow-between {
+            text-align: center;
+            color: var(--color-text-muted);
+            font-size: 18px;
+            line-height: 1;
+            padding: 2px 0;
+        }
+
+        /* ── Compare table ────────────────────────── */
+        .compare-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .compare-table th {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--color-text-muted);
+            padding: 8px 12px;
+            border-bottom: 2px solid var(--color-border);
+            text-align: left;
+        }
+
+        .compare-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--color-border);
+            font-size: 14px;
+        }
+
+        .compare-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .compare-table .mono {
+            font-family: var(--font-mono);
+            font-weight: 600;
+        }
+
+        .compare-table .best-row {
+            background: hsl(145 60% 96%);
+        }
+
+        .compare-table .best-row td {
+            font-weight: 700;
+        }
+
+        /* ── Message Card ─────────────────────────── */
+        .message-card {
+            padding: 24px;
+            border-radius: var(--radius-lg);
+            background: linear-gradient(135deg, var(--color-primary-50), var(--color-bg));
+            border: 1px solid var(--color-primary-200);
+            margin-top: 28px;
+        }
+
+        .message-card__heading {
+            font-size: 14px;
+            color: var(--color-primary);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            margin-bottom: 12px;
+        }
+
+        .message-card__text {
+            font-size: 15px;
+            line-height: 1.6;
+            color: var(--color-text);
+        }
+
+        .message-card__text strong {
+            color: var(--color-primary);
+        }
+
+        @media (max-width: 768px) {
+            .sim-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .funnel-visual-compare {
+                grid-template-columns: 1fr;
+            }
+
+            .summary-chips {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="layout">
+        <button class="mobile-toggle" id="mobile-toggle">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+        </button>
+        <aside class="sidebar" id="sidebar"></aside>
+        <main class="main-content">
+
+            <div class="page-header">
+                <div>
+                    <h1 class="page-header__title" data-i18n="funnel.title">Funnel Impact Calculator</h1>
+                    <p class="page-header__subtitle" data-i18n="funnel.subtitle">Analyze your conversion funnel, identify bottlenecks, and calculate
+                        the revenue impact of improvements</p>
+                </div>
+                <div class="page-header__actions">
+                    <button class="btn btn-secondary" id="reset-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <polyline points="1 4 1 10 7 10" />
+                            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+                        </svg>
+                        <span data-i18n="funnel.reset">Reset</span>
+                    </button>
+                    <button class="btn btn-primary" id="add-step-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                        <span data-i18n="funnel.addStep">Add Step</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="funnel-page">
+
+                <!-- ─── BLOCK 1: Funnel Overview ─── -->
+                <div class="block" id="block-overview">
+                    <div class="block__title"><span class="block__num">1</span> <span data-i18n="funnel.overviewTitle">Funnel Overview</span></div>
+                    <table class="funnel-table">
+                        <thead>
+                            <tr>
+                                <th style="width:40px">#</th>
+                                <th>Step Name</th>
+                                <th style="width:140px;text-align:right">Users</th>
+                                <th style="width:100px;text-align:center">Conversion</th>
+                                <th style="width:36px"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="funnel-tbody"></tbody>
+                    </table>
+                    <div class="summary-chips" id="summary-chips"></div>
+                </div>
+
+                <!-- ─── BLOCK 2: Target Goal ─── -->
+                <div class="block" id="block-target">
+                    <div class="block__title"><span class="block__num">2</span> <span data-i18n="funnel.targetTitle">Target Goal</span></div>
+                    <div class="target-row">
+                        <span class="text-sm" style="font-weight:600;" data-i18n="funnel.increaseBy">Increase final conversion by</span>
+                        <div class="input-with-unit" style="width:120px;">
+                            <input type="number" id="target-pp" class="form-input big-input" value="1" min="0.01"
+                                max="50" step="0.1">
+                            <span class="input-with-unit__suffix">pp</span>
+                        </div>
+                        <span class="target-arrow">→</span>
+                        <span id="target-range" class="text-sm"
+                            style="font-family:var(--font-mono);font-weight:700;font-size:16px;"></span>
+                    </div>
+                    <div class="target-result" id="target-result"></div>
+                </div>
+
+                <!-- ─── BLOCK 3: Improvement Strategy ─── -->
+                <div class="block" id="block-strategy">
+                    <div class="block__title"><span class="block__num">3</span> <span data-i18n="funnel.strategyTitle">Improvement Strategy</span></div>
+                    <div class="strategy-options" id="strategy-options">
+                        <label class="strategy-option active" data-strategy="bottleneck">
+                            <input type="radio" name="strategy" value="bottleneck" checked>
+                            <div>
+                                <div class="strategy-option__text" data-i18n="funnel.stratBottleneck">Improve bottleneck only</div>
+                                <div class="strategy-option__desc" data-i18n="funnel.stratBottleneckDesc">Fix the weakest step in the funnel</div>
+                            </div>
+                        </label>
+                        <label class="strategy-option" data-strategy="selected">
+                            <input type="radio" name="strategy" value="selected">
+                            <div>
+                                <div class="strategy-option__text" data-i18n="funnel.stratSelected">Improve selected steps</div>
+                                <div class="strategy-option__desc" data-i18n="funnel.stratSelectedDesc">Choose which steps to optimize</div>
+                            </div>
+                        </label>
+                        <label class="strategy-option" data-strategy="equal">
+                            <input type="radio" name="strategy" value="equal">
+                            <div>
+                                <div class="strategy-option__text" data-i18n="funnel.stratEqual">Improve all steps equally</div>
+                                <div class="strategy-option__desc" data-i18n="funnel.stratEqualDesc">Distribute improvement across all steps</div>
+                            </div>
+                        </label>
+                    </div>
+                    <div id="step-checkboxes" class="step-checkboxes" style="display:none;"></div>
+                    <div id="strategy-output"></div>
+                </div>
+
+                <!-- ─── BLOCK 4: Impact Simulator ─── -->
+                <div class="block" id="block-simulator">
+                    <div class="block__title"><span class="block__num">4</span> <span data-i18n="funnel.simTitle">Impact Simulator</span></div>
+                    <div class="sim-grid">
+                        <div class="form-group">
+                            <label class="form-label" for="sim-step" data-i18n="funnel.simStep">Step to improve</label>
+                            <select id="sim-step" class="form-select"></select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="sim-uplift" data-i18n="funnel.simImprovement">Improvement</label>
+                            <div class="input-with-unit"><input type="number" id="sim-uplift" class="form-input"
+                                    value="5" min="0" max="200" step="1"><span class="input-with-unit__suffix">%</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="sim-aov" data-i18n="funnel.simAov">Revenue per purchase (AOV)</label>
+                            <div class="input-with-unit"><input type="number" id="sim-aov" class="form-input" value="50"
+                                    min="0" step="1"><span class="input-with-unit__suffix">$</span></div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="sim-horizon" data-i18n="funnel.simHorizon">Time horizon</label>
+                            <select id="sim-horizon" class="form-select">
+                                <option value="1">1 month</option>
+                                <option value="3">3 months</option>
+                                <option value="6">6 months</option>
+                                <option value="12" selected>12 months</option>
+                                <option value="24">24 months</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="sim-results" id="sim-results"></div>
+
+                    <!-- Funnel visual comparison -->
+                    <div class="funnel-visual-compare" id="funnel-visual-compare"></div>
+                </div>
+
+                <!-- ─── Compare All Steps ─── -->
+                <div class="block" id="block-compare">
+                    <div class="block__title">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" style="margin-right:8px">
+                            <line x1="18" y1="20" x2="18" y2="10" />
+                            <line x1="12" y1="20" x2="12" y2="4" />
+                            <line x1="6" y1="20" x2="6" y2="14" />
+                        </svg>
+                        Compare: Impact of improving each step
+                    </div>
+                    <p class="text-sm text-muted mb-4">If each step improves by the simulator's uplift %, which step
+                        gives the biggest revenue impact?</p>
+                    <div id="compare-output"></div>
+                </div>
+
+                <!-- ─── Summary Message ─── -->
+                <div class="message-card" id="message-card"></div>
+
+            </div>
+        </main>
+    </div>
+    <script type="module" src="/js/funnel.js"></script>
+</body>
+
+</html>

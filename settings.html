@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings — ROI Calculator</title>
+    <link rel="stylesheet" href="/css/base.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <link rel="stylesheet" href="/css/pages.css">
+</head>
+
+<body>
+    <div class="layout">
+        <button class="mobile-toggle" id="mobile-toggle">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+        </button>
+        <aside class="sidebar" id="sidebar"></aside>
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-header__title" data-i18n="settings.title">Settings</h1>
+                    <p class="page-header__subtitle" data-i18n="settings.subtitle">Configure scoring formulas, defaults, and organization</p>
+                </div>
+                <button class="btn btn-primary" id="save-settings-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                        <polyline points="17 21 17 13 7 13 7 21" />
+                        <polyline points="7 3 7 8 15 8" />
+                    </svg>
+                    <span data-i18n="settings.save">Save Settings</span>
+                </button>
+            </div>
+
+            <!-- Score Formula -->
+            <div class="settings-section">
+                <h2 class="settings-section__title" data-i18n="settings.formulaTitle">Score Formula Builder</h2>
+                <p class="settings-section__desc" data-i18n="settings.formulaDesc">Choose or customize how features are prioritized</p>
+                <div class="form-group mb-6">
+                    <label class="form-label" for="formula-type" data-i18n="settings.formulaType">Formula Type</label>
+                    <select id="formula-type" class="form-select" style="max-width:300px;">
+                        <option value="rice">RICE Score</option>
+                        <option value="weighted_ev">Weighted EV</option>
+                        <option value="custom">Custom Weighted</option>
+                    </select>
+                </div>
+                <div id="formula-display" class="formula-preview mb-4"></div>
+                <div id="weights-section" class="grid grid-4 gap-4">
+                    <div class="form-group">
+                        <label class="form-label" for="w-reach" data-i18n="settings.reachWeight">Reach Weight</label>
+                        <input type="number" id="w-reach" class="form-input" min="0" max="10" step="0.1" value="1">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="w-impact" data-i18n="settings.impactWeight">Impact Weight</label>
+                        <input type="number" id="w-impact" class="form-input" min="0" max="10" step="0.1" value="1">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="w-confidence" data-i18n="settings.confidenceWeight">Confidence Weight</label>
+                        <input type="number" id="w-confidence" class="form-input" min="0" max="10" step="0.1" value="1">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="w-effort" data-i18n="settings.effortWeight">Effort Weight</label>
+                        <input type="number" id="w-effort" class="form-input" min="0" max="10" step="0.1" value="1">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Defaults -->
+            <div class="settings-section">
+                <h2 class="settings-section__title" data-i18n="settings.defaultsTitle">Default Parameters</h2>
+                <p class="settings-section__desc" data-i18n="settings.defaultsDesc">Set defaults for new features</p>
+                <div class="grid grid-3 gap-4">
+                    <div class="form-group">
+                        <label class="form-label" for="set-currency" data-i18n="settings.currency">Currency</label>
+                        <select id="set-currency" class="form-select">
+                            <option value="USD">USD ($)</option>
+                            <option value="EUR">EUR (€)</option>
+                            <option value="GBP">GBP (£)</option>
+                            <option value="RUB">RUB (₽)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="set-horizon" data-i18n="settings.defaultHorizon">Default Horizon</label>
+                        <select id="set-horizon" class="form-select">
+                            <option value="3" data-i18n="settings.month3">3 months</option>
+                            <option value="6" data-i18n="settings.month6">6 months</option>
+                            <option value="12" selected data-i18n="settings.month12">12 months</option>
+                            <option value="24" data-i18n="settings.month24">24 months</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="set-discount" data-i18n="settings.defaultDiscount">Default Discount Rate</label>
+                        <div class="input-with-unit">
+                            <input type="number" id="set-discount" class="form-input" min="0" max="100" step="0.5"
+                                value="0">
+                            <span class="input-with-unit__suffix">%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Organization -->
+            <div class="settings-section">
+                <h2 class="settings-section__title" data-i18n="settings.orgTitle">Organization</h2>
+                <p class="settings-section__desc" data-i18n="settings.orgDesc">Manage your organization and projects</p>
+                <div id="org-info"></div>
+                <div class="mt-6">
+                    <h3 class="section-title" data-i18n="settings.projects">Projects</h3>
+                    <div id="projects-list" class="flex flex-col gap-2 mb-4"></div>
+                    <div class="flex gap-3">
+                        <input type="text" id="new-project-name" class="form-input" data-i18n-placeholder="settings.newProjectPlaceholder" placeholder="New project name"
+                            style="max-width:300px;">
+                        <button class="btn btn-secondary" id="create-project-btn"><span data-i18n="settings.createProject">Create Project</span></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Danger Zone -->
+            <div class="settings-section" style="border-color:var(--color-danger);">
+                <h2 class="settings-section__title text-danger" data-i18n="settings.dangerTitle">Danger Zone</h2>
+                <p class="settings-section__desc" data-i18n="settings.dangerDesc">These actions cannot be undone</p>
+                <button class="btn btn-danger" id="clear-data-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    </svg>
+                    <span data-i18n="settings.clearData">Clear All Data</span>
+                </button>
+            </div>
+        </main>
+    </div>
+    <script type="module" src="/js/settings.js"></script>
+</body>
+
+</html>
