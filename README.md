@@ -8,7 +8,7 @@ workflow.
 
 If you find it useful, please consider **starring the repository on GitHub** – stars and feedback help the project grow
 and signal that this kind of tooling is valuable for the community.  
-Repository URL: `https://github.com/<your-username>/<your-repo-name>`
+Repository URL: `https://github.com/Azizbek-Analyst/growth-funnel-simulator`
 
 ---
 
